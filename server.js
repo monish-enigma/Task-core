@@ -1,64 +1,115 @@
-// server.js
 const express = require("express");
 const fs = require("fs");
 const cors = require("cors");
+const bodyParser = require("body-parser");
+
 const app = express();
 const PORT = 5000;
 
 app.use(cors());
-app.use(express.json());
+app.use(bodyParser.json());
 
 const TASKS_FILE = "./src/tasks.json";
 
-// Helper to read tasks
-const readTasks = () => {
-  const data = fs.readFileSync(TASKS_FILE);
-  return JSON.parse(data);
+// Helper: read tasks
+const readTasks = (cb) => {
+  fs.readFile(TASKS_FILE, "utf8", (err, data) => {
+    if (err) return cb(err, null);
+    try {
+      cb(null, JSON.parse(data || "[]"));
+    } catch (e) {
+      cb(e, []);
+    }
+  });
 };
 
-// Helper to write tasks
-const writeTasks = (tasks) => {
-  fs.writeFileSync(TASKS_FILE, JSON.stringify(tasks, null, 2));
+// Helper: write tasks
+const writeTasks = (tasks, cb) => {
+  fs.writeFile(TASKS_FILE, JSON.stringify(tasks, null, 2), cb);
 };
 
-// Get all tasks
+// Get current timestamp
+const getTimestamp = () => {
+  return new Date().toLocaleString("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+};
+
+// 🔹 Get all tasks
 app.get("/tasks", (req, res) => {
-  res.json(readTasks());
+  readTasks((err, tasks) => {
+    if (err) return res.status(500).json({ error: "Failed to read tasks" });
+    res.json(tasks);
+  });
 });
 
-// Add new task
+// 🔹 Add new task
 app.post("/tasks", (req, res) => {
-  const tasks = readTasks();
-  const newTask = {
-    id: Date.now(),
-    task_name: req.body.task_name,
-    assigned_to: req.body.assigned_to,
-    status: req.body.status || "Not Started",
-  };
-  tasks.push(newTask);
-  writeTasks(tasks);
-  res.json(newTask);
+  const newTask = req.body;
+  // Add initial history log
+  newTask.history = [
+    { status: newTask.status, timestamp: getTimestamp() }
+  ];
+
+  readTasks((err, tasks) => {
+    if (err) return res.status(500).json({ error: "Failed to read tasks" });
+
+    tasks.push(newTask);
+    writeTasks(tasks, (err) => {
+      if (err) return res.status(500).json({ error: "Failed to save task" });
+      res.json(newTask);
+    });
+  });
 });
 
-// Update task (status or assigned_to)
+// 🔹 Update task (status or anything else)
 app.put("/tasks/:id", (req, res) => {
-  const tasks = readTasks();
   const taskId = parseInt(req.params.id);
-  const index = tasks.findIndex((t) => t.id === taskId);
-  if (index === -1) return res.status(404).send("Task not found");
+  const updatedTask = req.body;
 
-  tasks[index] = { ...tasks[index], ...req.body };
-  writeTasks(tasks);
-  res.json(tasks[index]);
+  readTasks((err, tasks) => {
+    if (err) return res.status(500).json({ error: "Failed to read tasks" });
+
+    const index = tasks.findIndex((t) => t.id === taskId);
+    if (index === -1) return res.status(404).json({ error: "Task not found" });
+
+    const oldTask = tasks[index];
+
+    // If status changed → add log
+    if (oldTask.status !== updatedTask.status) {
+      updatedTask.history = [
+        ...(oldTask.history || []),
+        { status: updatedTask.status, timestamp: getTimestamp() }
+      ];
+    } else {
+      updatedTask.history = oldTask.history || [];
+    }
+
+    tasks[index] = updatedTask;
+
+    writeTasks(tasks, (err) => {
+      if (err) return res.status(500).json({ error: "Failed to update task" });
+      res.json(updatedTask);
+    });
+  });
 });
 
-// Delete task
+// 🔹 Delete task
 app.delete("/tasks/:id", (req, res) => {
-  const tasks = readTasks();
   const taskId = parseInt(req.params.id);
-  const newTasks = tasks.filter((t) => t.id !== taskId);
-  writeTasks(newTasks);
-  res.sendStatus(200);
+
+  readTasks((err, tasks) => {
+    if (err) return res.status(500).json({ error: "Failed to read tasks" });
+
+    const updated = tasks.filter((t) => t.id !== taskId);
+    writeTasks(updated, (err) => {
+      if (err) return res.status(500).json({ error: "Failed to delete task" });
+      res.json({ success: true });
+    });
+  });
 });
 
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+app.listen(PORT, () =>
+  console.log(`✅ Server running on http://localhost:${PORT}`)
+);

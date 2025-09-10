@@ -6,7 +6,21 @@
       1,
       2
     ],
-    "status": "In Progress"
+    "status": "Completed",
+    "history": [
+      {
+        "status": "Not Started",
+        "timestamp": "Sep 10, 2025, 8:08 PM"
+      },
+      {
+        "status": "In Progress",
+        "timestamp": "Sep 10, 2025, 8:08 PM"
+      },
+      {
+        "status": "Completed",
+        "timestamp": "Sep 10, 2025, 8:08 PM"
+      }
+    ]
   },
   {
     "id": 102,
@@ -14,7 +28,13 @@
     "assignedUserIds": [
       3
     ],
-    "status": "Not Started"
+    "status": "Completed",
+    "history": [
+      {
+        "status": "Completed",
+        "timestamp": "Sep 10, 2025, 8:07 PM"
+      }
+    ]
   },
   {
     "id": 103,
@@ -23,6 +43,16 @@
       4,
       5
     ],
-    "status": "Completed"
+    "status": "Completed",
+    "history": [
+      {
+        "status": "In Progress",
+        "timestamp": "Sep 10, 2025, 8:15 PM"
+      },
+      {
+        "status": "Completed",
+        "timestamp": "Sep 10, 2025, 8:15 PM"
+      }
+    ]
   }
 ]
