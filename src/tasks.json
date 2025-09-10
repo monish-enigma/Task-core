@@ -1,0 +1,28 @@
+[
+  {
+    "id": 101,
+    "taskName": "Design Login Page",
+    "assignedUserIds": [
+      1,
+      2
+    ],
+    "status": "In Progress"
+  },
+  {
+    "id": 102,
+    "taskName": "Setup Database",
+    "assignedUserIds": [
+      3
+    ],
+    "status": "Not Started"
+  },
+  {
+    "id": 103,
+    "taskName": "Build Dashboard",
+    "assignedUserIds": [
+      4,
+      5
+    ],
+    "status": "Completed"
+  }
+]
