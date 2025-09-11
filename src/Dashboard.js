@@ -1,330 +1,381 @@
-import React, { useState, useEffect } from "react";
-import users from "./users.json";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Select,
+  MenuItem,
+  Button,
+  TextField,
+  Typography,
+  Box,
+  Chip,
+  Stack,
+  FormControl,
+  InputLabel,
+  Paper,
+} from "@mui/material";
+import NeonButton from "./Neon";
 
-function Dashboard() {
+const USERS = [
+  { id: 1, name: "Monish" },
+  { id: 2, name: "Steve" },
+  { id: 3, name: "Charles" },
+  { id: 4, name: "Martin" },
+  { id: 5, name: "Karen" },
+];
+
+const STATUS_OPTIONS = ["Not Started", "In Progress", "Completed"];
+const STORY_POINTS = [1, 2, 3, 5, 8]; // Fibonacci scale
+
+const Dashboard = () => {
   const [tasks, setTasks] = useState([]);
-  const [showForm, setShowForm] = useState(false);
-  const [taskName, setTaskName] = useState("");
-  const [assignedUserIds, setAssignedUserIds] = useState([]);
-  const [status, setStatus] = useState("Not Started");
-  const [showHistoryId, setShowHistoryId] = useState(null);
+  const [newTask, setNewTask] = useState({ name: "", assigned: [], storyPoints: 1 });
+  const [subtaskInputs, setSubtaskInputs] = useState({}); // {taskId: {name, users, storyPoints}}
 
-  // Load tasks
   useEffect(() => {
-    fetch("http://localhost:5000/tasks")
-      .then((res) => res.json())
-      .then((data) => setTasks(data))
-      .catch((err) => console.error("Error fetching tasks:", err));
+    fetchTasks();
   }, []);
 
-  // Add new task
-  const handleAddTask = async (e) => {
-    e.preventDefault();
-    const newTask = {
+  const fetchTasks = async () => {
+    const res = await axios.get("http://localhost:5000/tasks");
+    setTasks(res.data);
+  };
+
+  // --- Task CRUD ---
+  const addTask = async () => {
+    if (!newTask.name) return;
+    const task = {
       id: Date.now(),
-      taskName,
-      assignedUserIds,
-      status,
+      taskName: newTask.name,
+      assignedUserIds: newTask.assigned,
+      storyPoints: newTask.storyPoints,
+      status: "Not Started",
+      history: [],
+      subtasks: [],
     };
-    const res = await fetch("http://localhost:5000/tasks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newTask),
+    await axios.post("http://localhost:5000/tasks", task);
+    setNewTask({ name: "", assigned: [], storyPoints: 1 });
+    fetchTasks();
+  };
+
+  const updateTaskStatus = async (taskId, status) => {
+    const task = tasks.find((t) => t.id === taskId);
+    task.history.push({ status, timestamp: new Date().toLocaleString() });
+    await axios.put(`http://localhost:5000/tasks/${taskId}`, { status, history: task.history });
+    fetchTasks();
+  };
+
+  const deleteTask = async (taskId) => {
+    await axios.delete(`http://localhost:5000/tasks/${taskId}`);
+    fetchTasks();
+  };
+
+  // --- Subtask CRUD ---
+  const addSubtask = async (taskId) => {
+    const input = subtaskInputs[taskId];
+    if (!input || !input.name) return;
+
+    const subtask = {
+      id: Date.now(),
+      taskName: input.name,
+      assignedUserIds: input.users || [],
+      storyPoints: input.storyPoints || 1,
+      status: "Not Started",
+      history: [],
+    };
+    await axios.post(`http://localhost:5000/tasks/${taskId}/subtasks`, subtask);
+    setSubtaskInputs({ ...subtaskInputs, [taskId]: { name: "", users: [], storyPoints: 1 } });
+    fetchTasks();
+  };
+
+  const updateSubtaskStatus = async (taskId, subtaskId, status) => {
+    const task = tasks.find((t) => t.id === taskId);
+    const subtask = task.subtasks.find((st) => st.id === subtaskId);
+    subtask.history.push({ status, timestamp: new Date().toLocaleString() });
+    await axios.put(`http://localhost:5000/tasks/${taskId}/subtasks/${subtaskId}`, {
+      status,
+      history: subtask.history,
     });
-    if (res.ok) {
-      const saved = await res.json();
-      setTasks([...tasks, saved]);
-      setTaskName("");
-      setAssignedUserIds([]);
-      setStatus("Not Started");
-      setShowForm(false);
-    }
+    fetchTasks();
   };
 
-  const toggleUserSelection = (id) => {
-    setAssignedUserIds((prev) =>
-      prev.includes(id) ? prev.filter((uid) => uid !== id) : [...prev, id]
-    );
+  const deleteSubtask = async (taskId, subtaskId) => {
+    await axios.delete(`http://localhost:5000/tasks/${taskId}/subtasks/${subtaskId}`);
+    fetchTasks();
   };
 
-  // Update status
-  const handleStatusChange = async (task, newStatus) => {
-    const updatedTask = { ...task, status: newStatus };
-    const res = await fetch(`http://localhost:5000/tasks/${task.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updatedTask),
-    });
-    if (res.ok) {
-      const saved = await res.json();
-      setTasks(tasks.map((t) => (t.id === task.id ? saved : t)));
-    }
-  };
+  // --- Helpers ---
+  const getUserNames = (ids) =>
+    USERS.filter((u) => ids.includes(u.id)).map((u) => u.name).join(", ");
 
-  // Delete task
-  const handleDelete = async (id) => {
-    const res = await fetch(`http://localhost:5000/tasks/${id}`, {
-      method: "DELETE",
-    });
-    if (res.ok) {
-      setTasks(tasks.filter((t) => t.id !== id));
-    }
-  };
+  const getTotalStoryPoints = (task) =>
+    (task.storyPoints || 0) + task.subtasks.reduce((sum, st) => sum + (st.storyPoints || 0), 0);
 
-  // 🔹 Common Button Style
-  const buttonStyle = {
-    background: "#00f0ff",
-    border: "none",
-    padding: "0.5rem 1rem",
-    borderRadius: "25px",
-    cursor: "pointer",
-    fontWeight: "bold",
-    color: "#000",
-    transition: "all 0.3s ease",
-    boxShadow: "0 0 8px #00f0ff80",
-  };
+  // Reporting calculations
+  const reportByStatus = STATUS_OPTIONS.map((status) => ({
+    status,
+    points: tasks.reduce(
+      (sum, t) =>
+        sum +
+        (t.status === status ? t.storyPoints : 0) +
+        t.subtasks.filter((st) => st.status === status).reduce((s, st) => s + (st.storyPoints || 0), 0),
+      0
+    ),
+  }));
 
-  const buttonHover = {
-    transform: "scale(1.05)",
-    boxShadow: "0 0 15px #00f0ff",
-  };
+  const reportByAssignee = USERS.map((user) => ({
+    user: user.name,
+    points: tasks.reduce(
+      (sum, t) =>
+        sum +
+        (t.assignedUserIds.includes(user.id) ? t.storyPoints : 0) +
+        t.subtasks.reduce(
+          (s, st) => s + (st.assignedUserIds.includes(user.id) ? st.storyPoints : 0),
+          0
+        ),
+      0
+    ),
+  }));
 
   return (
-    <div
-      style={{
-        padding: "2rem",
-        background: "linear-gradient(135deg, #0f0f0f, #1a1a1a)",
-        color: "#fff",
-        minHeight: "100vh",
-        fontFamily: "Arial, sans-serif",
-      }}
-    >
-      <h2
-        style={{
-          color: "#00f0ff",
-          textShadow: "0 0 10px #00f0ff",
-          marginBottom: "1rem",
-        }}
-      >
+    <Box sx={{ p: 4, bgcolor: "#1f1f2f", minHeight: "100vh" }}>
+      <Typography variant="h4" align="center" color="#e0e0e0" gutterBottom>
         Task Dashboard
-      </h2>
-
-      {/* Add Task Button */}
-      <button
-        onClick={() => setShowForm(!showForm)}
-        style={buttonStyle}
-        onMouseOver={(e) => Object.assign(e.target.style, buttonHover)}
-        onMouseOut={(e) => Object.assign(e.target.style, buttonStyle)}
-      >
-        {showForm ? "Cancel" : "Add Task"}
-      </button>
-
-      {/* Add Task Form */}
-      {showForm && (
-        <form
-          onSubmit={handleAddTask}
-          style={{
-            background: "#1f1f1f",
-            padding: "1.5rem",
-            borderRadius: "12px",
-            marginTop: "1rem",
-            boxShadow: "0 0 15px rgba(0, 240, 255, 0.2)",
-          }}
-        >
-          <div style={{ marginBottom: "1rem" }}>
-            <label>Task Name:</label>
-            <input
-              type="text"
-              value={taskName}
-              onChange={(e) => setTaskName(e.target.value)}
-              required
-              style={{
-                width: "100%",
-                padding: "10px",
-                marginTop: "5px",
-                borderRadius: "8px",
-                border: "1px solid #333",
-                background: "#0f0f0f",
-                color: "#fff",
-              }}
-            />
-          </div>
-          <div style={{ marginBottom: "1rem" }}>
-            <label>Assign To:</label>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginTop: "8px" }}>
-              {users.map((user) => (
-                <label
-                  key={user.id}
-                  style={{
-                    padding: "6px 12px",
-                    borderRadius: "20px",
-                    cursor: "pointer",
-                    background: assignedUserIds.includes(user.id) ? "#00f0ff" : "#333",
-                    color: assignedUserIds.includes(user.id) ? "#000" : "#fff",
-                    transition: "all 0.3s ease",
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={assignedUserIds.includes(user.id)}
-                    onChange={() => toggleUserSelection(user.id)}
-                    style={{ marginRight: "5px" }}
-                  />
-                  {user.name}
-                </label>
-              ))}
-            </div>
-          </div>
-          <div style={{ marginBottom: "1rem" }}>
-            <label>Status:</label>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "10px",
-                borderRadius: "8px",
-                border: "1px solid #333",
-                background: "#0f0f0f",
-                color: "#fff",
-              }}
+      </Typography>
+      {/* Top row: Add Task + Reporting */}
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 4, flexWrap: "wrap" }}>
+        <NeonButton/>
+        {/* Add Task */}
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems="center">
+          <TextField
+            label="Task Name"
+            variant="outlined"
+            size="small"
+            value={newTask.name}
+            onChange={(e) => setNewTask({ ...newTask, name: e.target.value })}
+            sx={{ bgcolor: "#2a2a3f", input: { color: "#e0e0e0" }, width: 250 }}
+          />
+          <FormControl sx={{ minWidth: 180, bgcolor: "#2a2a3f" }}>
+            <InputLabel sx={{ color: "#aaa" }}>Assign Users</InputLabel>
+            <Select
+              multiple
+              value={newTask.assigned}
+              onChange={(e) => setNewTask({ ...newTask, assigned: e.target.value })}
+              sx={{ color: "#e0e0e0" }}
             >
-              <option value="Not Started">Not Started</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Completed">Completed</option>
-            </select>
-          </div>
-          <button
-            type="submit"
-            style={buttonStyle}
-            onMouseOver={(e) => Object.assign(e.target.style, buttonHover)}
-            onMouseOut={(e) => Object.assign(e.target.style, buttonStyle)}
+              {USERS.map((u) => (
+                <MenuItem key={u.id} value={u.id}>{u.name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl sx={{ minWidth: 100, bgcolor: "#2a2a3f" }}>
+            <InputLabel sx={{ color: "#aaa" }}>Story Points</InputLabel>
+            <Select
+              value={newTask.storyPoints}
+              onChange={(e) => setNewTask({ ...newTask, storyPoints: e.target.value })}
+              sx={{ color: "#e0e0e0" }}
+            >
+              {STORY_POINTS.map((sp) => <MenuItem key={sp} value={sp}>{sp}</MenuItem>)}
+            </Select>
+          </FormControl>
+          
+          <Button
+            variant="contained"
+            onClick={addTask}
+            sx={{
+              bgcolor: "#4b6cb7",
+              ":hover": { bgcolor: "#3a549a" },
+              borderRadius: 3,
+              px: 3,
+            }}
           >
-            Save Task
-          </button>
-        </form>
-      )}
+            Add Task
+          </Button>
+        </Stack>
+            
+        {/* Reporting Panel */}
+        <Paper
+          sx={{
+            bgcolor: "#2a2a3f",
+            color: "#e0e0e0",
+            p: 2,
+            borderRadius: 2,
+            minWidth: 200,
+            mt: { xs: 2, sm: 0 },
+          }}
+          elevation={3}
+        >
+          <Typography variant="subtitle1" fontWeight="bold" mb={1}>
+            Reporting
+          </Typography>
+          <Typography variant="body2" mb={1}>
+            <strong>By Status:</strong>
+          </Typography>
+          {reportByStatus.map((r) => (
+            <Typography key={r.status} variant="body2">
+              {r.status}: {r.points} pts
+            </Typography>
+          ))}
+          <Typography variant="body2" mt={1} mb={1}>
+            <strong>By Assignee:</strong>
+          </Typography>
+          {reportByAssignee.map((r) => (
+            <Typography key={r.user} variant="body2">
+              {r.user}: {r.points} pts
+            </Typography>
+          ))}
+        </Paper>
+      </Box>
 
       {/* Tasks Table */}
-      <table
-        style={{
-          width: "100%",
-          borderCollapse: "collapse",
-          marginTop: "2rem",
-          borderRadius: "12px",
-          overflow: "hidden",
-          boxShadow: "0 0 15px rgba(0, 240, 255, 0.1)",
-        }}
-      >
-        <thead>
-          <tr style={{ background: "#222", color: "#00f0ff" }}>
-            <th style={{ padding: "12px" }}>Task</th>
-            <th style={{ padding: "12px" }}>Assigned To</th>
-            <th style={{ padding: "12px" }}>Status</th>
-            <th style={{ padding: "12px" }}>History</th>
-            <th style={{ padding: "12px" }}>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {tasks.map((task, idx) => (
+      <Table sx={{ borderCollapse: "separate", borderSpacing: "0 10px" }}>
+        <TableHead>
+          <TableRow>
+            <TableCell sx={{ color: "#e0e0e0" }}>Task</TableCell>
+            <TableCell sx={{ color: "#e0e0e0" }}>Assigned To</TableCell>
+            <TableCell sx={{ color: "#e0e0e0" }}>Status</TableCell>
+            <TableCell sx={{ color: "#e0e0e0" }}>Story Points</TableCell>
+            <TableCell sx={{ color: "#e0e0e0" }}>Total Points</TableCell>
+            <TableCell sx={{ color: "#e0e0e0" }}>Actions</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {tasks.map((task) => (
             <React.Fragment key={task.id}>
-              <tr
-                style={{
-                  background: idx % 2 === 0 ? "#1a1a1a" : "#111",
-                  transition: "all 0.3s ease",
-                }}
-                onMouseOver={(e) =>
-                  (e.currentTarget.style.background = "#2a2a2a")
-                }
-                onMouseOut={(e) =>
-                  (e.currentTarget.style.background = idx % 2 === 0 ? "#1a1a1a" : "#111")
-                }
-              >
-                <td style={{ padding: "12px" }}>{task.taskName}</td>
-                <td style={{ padding: "12px" }}>
-                  {task.assignedUserIds
-                    .map((id) => users.find((u) => u.id === id)?.name)
-                    .join(", ")}
-                </td>
-                <td style={{ padding: "12px" }}>
-                  <select
+              <TableRow sx={{ bgcolor: "#2a2a3f", borderRadius: 2 }}>
+                <TableCell>
+                  <Typography variant="subtitle1" fontWeight="bold" color="#e0e0e0">
+                    {task.taskName}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Stack direction="row" spacing={1} flexWrap="wrap">
+                    {task.assignedUserIds.map((id) => {
+                      const user = USERS.find((u) => u.id === id);
+                      return user ? <Chip key={id} label={user.name} size="small" sx={{ bgcolor: "#3a3a5c", color: "#fff" }} /> : null;
+                    })}
+                  </Stack>
+                </TableCell>
+                <TableCell>
+                  <Select
                     value={task.status}
-                    onChange={(e) => handleStatusChange(task, e.target.value)}
-                    style={{
-                      padding: "8px",
-                      borderRadius: "8px",
-                      background: "#0f0f0f",
-                      color: "#fff",
-                      border: "1px solid #333",
-                    }}
+                    onChange={(e) => updateTaskStatus(task.id, e.target.value)}
+                    sx={{ bgcolor: "#3a3a5c", color: "#fff", borderRadius: 1, minWidth: 120 }}
                   >
-                    <option value="Not Started">Not Started</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="Completed">Completed</option>
-                  </select>
-                </td>
-                <td style={{ padding: "12px" }}>
-                  <button
-                    onClick={() =>
-                      setShowHistoryId(showHistoryId === task.id ? null : task.id)
-                    }
-                    style={buttonStyle}
-                    onMouseOver={(e) => Object.assign(e.target.style, buttonHover)}
-                    onMouseOut={(e) => Object.assign(e.target.style, buttonStyle)}
-                  >
-                    {showHistoryId === task.id ? "Hide" : "View"} History
-                  </button>
-                </td>
-                <td style={{ padding: "12px" }}>
-                  <button
-                    onClick={() => handleDelete(task.id)}
-                    style={{
-                      ...buttonStyle,
-                      background: "#ff4444",
-                      color: "#fff",
-                      boxShadow: "0 0 8px #ff444480",
-                    }}
-                    onMouseOver={(e) =>
-                      Object.assign(e.target.style, {
-                        transform: "scale(1.05)",
-                        boxShadow: "0 0 15px #ff4444",
-                        background: "#ff2222",
-                      })
-                    }
-                    onMouseOut={(e) =>
-                      Object.assign(e.target.style, {
-                        ...buttonStyle,
-                        background: "#ff4444",
-                        color: "#fff",
-                        boxShadow: "0 0 8px #ff444480",
-                      })
-                    }
+                    {STATUS_OPTIONS.map((s) => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                  </Select>
+                </TableCell>
+                <TableCell>{task.storyPoints}</TableCell>
+                <TableCell>{getTotalStoryPoints(task)}</TableCell>
+                <TableCell>
+                  <Button
+                    size="small"
+                    onClick={() => deleteTask(task.id)}
+                    sx={{ bgcolor: "#b74b4b",color:"white", ":hover": { bgcolor: "#933636" } }}
                   >
                     Delete
-                  </button>
-                </td>
-              </tr>
-              {showHistoryId === task.id && (
-                <tr>
-                  <td colSpan="5" style={{ background: "#1f1f1f", padding: "15px" }}>
-                    <h4 style={{ color: "#00f0ff" }}>History</h4>
-                    <ul style={{ margin: 0, paddingLeft: "20px" }}>
-                      {task.history?.map((h, i) => (
-                        <li key={i}>
-                          <span style={{ color: "#aaa" }}>{h.status}</span>{" "}
-                          <span style={{ color: "#00f0ff" }}>{h.timestamp}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </td>
-                </tr>
-              )}
+                  </Button>
+                </TableCell>
+              </TableRow>
+
+              {/* Subtasks */}
+              {task.subtasks.map((st) => (
+                <TableRow key={st.id} sx={{ bgcolor: "#3a3a5c" }}>
+                  <TableCell sx={{ pl: 5 }}>
+                    <Typography color="#ccc">↳ {st.taskName}</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Stack direction="row" spacing={1} flexWrap="wrap">
+                      {st.assignedUserIds.map((id) => {
+                        const user = USERS.find((u) => u.id === id);
+                        return user ? <Chip key={id} label={user.name} size="small" sx={{ bgcolor: "#555577", color: "#fff" }} /> : null;
+                      })}
+                    </Stack>
+                  </TableCell>
+                  <TableCell>
+                    <Select
+                      value={st.status}
+                      onChange={(e) => updateSubtaskStatus(task.id, st.id, e.target.value)}
+                      sx={{ bgcolor: "#555577", color: "#fff", borderRadius: 1, minWidth: 120 }}
+                    >
+                      {STATUS_OPTIONS.map((s) => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                    </Select>
+                  </TableCell>
+                  <TableCell>{st.storyPoints}</TableCell>
+                  <TableCell>-</TableCell>
+                  <TableCell>
+                    <Button
+                      size="small"
+                      onClick={() => deleteSubtask(task.id, st.id)}
+                      sx={{ bgcolor: "#b74b4b", color: "white", ":hover": { bgcolor: "#933636" } }}
+                    >
+                      Delete
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+
+              {/* Add Subtask Row */}
+              <TableRow sx={{ bgcolor: "#2a2a3f" }}>
+                <TableCell sx={{ pl: 5 }}>
+                  <TextField
+                    placeholder="New Subtask Name"
+                    variant="outlined"
+                    size="small"
+                    value={subtaskInputs[task.id]?.name || ""}
+                    onChange={(e) => setSubtaskInputs({
+                      ...subtaskInputs,
+                      [task.id]: { ...subtaskInputs[task.id], name: e.target.value }
+                    })}
+                    sx={{ bgcolor: "#3a3a5c", input: { color: "#e0e0e0" }, width: 200 }}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Select
+                    multiple
+                    value={subtaskInputs[task.id]?.users || []}
+                    onChange={(e) => setSubtaskInputs({
+                      ...subtaskInputs,
+                      [task.id]: { ...subtaskInputs[task.id], users: e.target.value }
+                    })}
+                    displayEmpty
+                    sx={{ bgcolor: "#3a3a5c", color: "#e0e0e0", minWidth: 150 }}
+                  >
+                    {USERS.map((u) => <MenuItem key={u.id} value={u.id}>{u.name}</MenuItem>)}
+                  </Select>
+                </TableCell>
+                <TableCell>
+                  <Select
+                    value={subtaskInputs[task.id]?.storyPoints || 1}
+                    onChange={(e) => setSubtaskInputs({
+                      ...subtaskInputs,
+                      [task.id]: { ...subtaskInputs[task.id], storyPoints: e.target.value }
+                    })}
+                    sx={{ bgcolor: "#3a3a5c", color: "#e0e0e0", borderRadius: 1, minWidth: 80 }}
+                  >
+                    {STORY_POINTS.map((sp) => <MenuItem key={sp} value={sp}>{sp}</MenuItem>)}
+                  </Select>
+                </TableCell>
+                <TableCell colSpan={2}>
+                  <Button
+                    size="small"
+                    onClick={() => addSubtask(task.id)}
+                    sx={{ bgcolor: "#4b6cb7", color: "white", ":hover": { bgcolor: "#3a549a" }, borderRadius: 3 }}
+                  >
+                    Add Subtask
+                  </Button>
+                </TableCell>
+              </TableRow>
             </React.Fragment>
           ))}
-        </tbody>
-      </table>
-    </div>
+        </TableBody>
+      </Table>
+    </Box>
   );
-}
+};
 
 export default Dashboard;

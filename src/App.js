@@ -176,7 +176,7 @@ export default function App() {
     <div style={containerStyle}>
       <div style={cardStyle}>
         <div style={headerStyle}>
-          <h1 style={titleStyle}>NeonTasks</h1>
+          <h1 style={titleStyle}>Task-Core</h1>
           <div style={neonBarStyle} />
         </div>
 
@@ -221,9 +221,9 @@ export default function App() {
             Sign in
           </button>
 
-          <div style={smallNote}>
+          {/* <div style={smallNote}>
             Demo accounts are stored locally in <code>src/users.json</code>
-          </div>
+          </div> */}
         </form>
       </div>
     </div>

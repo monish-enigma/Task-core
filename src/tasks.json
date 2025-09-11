@@ -1,57 +1,168 @@
 [
   {
     "id": 101,
-    "taskName": "Design Login Page",
+    "taskName": "Build Login Page",
     "assignedUserIds": [
       1,
       2
     ],
-    "status": "Completed",
+    "status": "In Progress",
+    "storyPoints": 5,
     "history": [
       {
         "status": "Not Started",
-        "timestamp": "Sep 10, 2025, 8:08 PM"
+        "timestamp": "Aug 29, 2025, 10:00 AM"
       },
       {
         "status": "In Progress",
-        "timestamp": "Sep 10, 2025, 8:08 PM"
+        "timestamp": "Aug 29, 2025, 10:30 AM"
+      }
+    ],
+    "subtasks": [
+      {
+        "id": 201,
+        "taskName": "Create UI",
+        "assignedUserIds": [
+          2
+        ],
+        "status": "Not Started",
+        "storyPoints": 2,
+        "history": []
       },
       {
-        "status": "Completed",
-        "timestamp": "Sep 10, 2025, 8:08 PM"
+        "id": 202,
+        "taskName": "Implement Auth",
+        "assignedUserIds": [
+          3
+        ],
+        "status": "Not Started",
+        "storyPoints": 3,
+        "history": []
+      },
+      {
+        "taskName": "ss",
+        "assignedUserIds": [
+          2
+        ],
+        "status": "Not Started",
+        "storyPoints": 1,
+        "id": 1757519527926,
+        "history": []
       }
     ]
   },
   {
-    "id": 102,
-    "taskName": "Setup Database",
-    "assignedUserIds": [
-      3
-    ],
-    "status": "Completed",
-    "history": [
+    "id": 1757598250261,
+    "taskName": "create a sidebar",
+    "assignedUserIds": [],
+    "status": "Not Started",
+    "storyPoints": 0,
+    "history": [],
+    "subtasks": [
       {
+        "id": 1757598250265,
+        "taskName": "Design sidebar layout",
+        "assignedUserIds": [],
+        "status": "Not Started",
+        "storyPoints": 0,
+        "history": []
+      },
+      {
+        "id": 1757598250266,
+        "taskName": "Develop sidebar HTML structure",
+        "assignedUserIds": [],
+        "status": "Not Started",
+        "storyPoints": 0,
+        "history": []
+      },
+      {
+        "id": 1757598250268,
+        "taskName": "Implement sidebar CSS styling",
+        "assignedUserIds": [],
         "status": "Completed",
-        "timestamp": "Sep 10, 2025, 8:07 PM"
+        "storyPoints": 0,
+        "history": [
+          {
+            "status": "Completed",
+            "timestamp": "9/11/2025, 7:15:48 PM"
+          }
+        ]
+      },
+      {
+        "id": 1757598250269,
+        "taskName": "Integrate sidebar with main content",
+        "assignedUserIds": [],
+        "status": "Not Started",
+        "storyPoints": 0,
+        "history": []
+      },
+      {
+        "id": 1757598250270,
+        "taskName": "Add sidebar functionality",
+        "assignedUserIds": [],
+        "status": "Not Started",
+        "storyPoints": 0,
+        "history": []
       }
     ]
   },
   {
-    "id": 103,
-    "taskName": "Build Dashboard",
-    "assignedUserIds": [
-      4,
-      5
-    ],
-    "status": "Completed",
-    "history": [
+    "id": 1757598310270,
+    "taskName": "create a navigation bar",
+    "assignedUserIds": [],
+    "status": "Not Started",
+    "storyPoints": 0,
+    "history": [],
+    "subtasks": [
       {
+        "id": 1757598310277,
+        "taskName": "Design the navbar layout",
+        "assignedUserIds": [],
         "status": "In Progress",
-        "timestamp": "Sep 10, 2025, 8:15 PM"
+        "storyPoints": 0,
+        "history": [
+          {
+            "status": "In Progress",
+            "timestamp": "9/11/2025, 7:15:32 PM"
+          }
+        ]
       },
       {
+        "id": 1757598310280,
+        "taskName": "Implement HTML structure",
+        "assignedUserIds": [],
+        "status": "Not Started",
+        "storyPoints": 0,
+        "history": []
+      },
+      {
+        "id": 1757598310282,
+        "taskName": "Add CSS styling",
+        "assignedUserIds": [],
         "status": "Completed",
-        "timestamp": "Sep 10, 2025, 8:15 PM"
+        "storyPoints": 0,
+        "history": [
+          {
+            "status": "Completed",
+            "timestamp": "9/11/2025, 7:15:35 PM"
+          }
+        ]
+      },
+      {
+        "id": 1757598310287,
+        "taskName": "Integrate JavaScript functionality",
+        "assignedUserIds": [],
+        "status": "Not Started",
+        "storyPoints": 0,
+        "history": []
+      },
+      {
+        "id": 1757598310290,
+        "taskName": "Test and debug",
+        "assignedUserIds": [],
+        "status": "Not Started",
+        "storyPoints": 0,
+        "history": []
       }
     ]
   }

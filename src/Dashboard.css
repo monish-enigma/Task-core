@@ -1,0 +1,107 @@
+/* Dashboard.css */
+
+.dashboard-container {
+  background: #121212;
+  color: #e0e0e0;
+  min-height: 100vh;
+  padding: 20px;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.dashboard-title {
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: 20px;
+  color: #90caf9;
+}
+
+.add-task-section {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.add-task-section input,
+.add-task-section select {
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+  background: #1e1e1e;
+  color: #fff;
+  transition: 0.3s ease;
+}
+
+.add-task-section input:focus,
+.add-task-section select:focus {
+  background: #2a2a2a;
+  box-shadow: 0 0 5px #90caf9;
+}
+
+.add-btn {
+  padding: 10px 15px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  background: #2196f3;
+  color: white;
+  font-weight: bold;
+  transition: 0.3s ease;
+}
+
+.add-btn:hover {
+  background: #1976d2;
+  transform: scale(1.05);
+}
+
+.task-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: auto;
+  background: #1e1e1e;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.task-table th,
+.task-table td {
+  padding: 12px;
+  text-align: center;
+  border-bottom: 1px solid #333;
+}
+
+.task-table th {
+  background: #2c2c2c;
+  color: #90caf9;
+}
+
+.task-table tr:hover {
+  background: #2a2a2a;
+  transition: 0.3s ease;
+}
+
+.task-table select {
+  padding: 6px;
+  border-radius: 6px;
+  border: none;
+  outline: none;
+  background: #2c2c2c;
+  color: #fff;
+}
+
+.delete-btn {
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  background: #e53935;
+  color: white;
+  font-weight: bold;
+  transition: 0.3s ease;
+}
+
+.delete-btn:hover {
+  background: #c62828;
+  transform: scale(1.05);
+}
