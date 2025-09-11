@@ -37,6 +37,9 @@ In another terminal:
 node server.js
 Runs on http://localhost:5000
 
+
+Use credentials : monish@example.com
+and password : 123456
 ---
 The backend provides:
 GET /tasks → List all tasks
