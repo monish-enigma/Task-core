@@ -1,70 +1,135 @@
-# Getting Started with Create React App
+# 🚀 Task Automation with React, Node.js, and n8n + Gemini
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This project is a **task management demo** that integrates:
+- **React (Frontend)** – Neon button popup to create tasks and subtasks
+- **Node.js + Express (Backend)** – CRUD operations for tasks & subtasks (JSON file–based)
+- **n8n (Workflow Engine)** – Automates subtask generation via Google Gemini API
+- **JSON-based Storage** – Users and tasks are stored in simple JSON files (no external DB in current implementation)
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+## 📦 Prerequisites
 
-### `npm start`
+Before running the project, make sure you have installed:
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- [Node.js](https://nodejs.org/) (v16+ recommended)
+- [npm](https://www.npmjs.com/get-npm)
+- [n8n](https://n8n.io/) (installed globally via `npm install -g n8n`)
+- A valid **Google Gemini API Key**
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+---
 
-### `npm test`
+## ⚙️ Setup Instructions
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### 1. Clone & Install Dependencies
 
-### `npm run build`
+git clone <repo-url>
+cd <repo-folder>
+npm install
+2. Start the React Frontend
+npm start
+Runs on http://localhost:3000
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+3. Start the Node.js Backend
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+In another terminal:
+node server.js
+Runs on http://localhost:5000
 
-### `npm run eject`
+---
+The backend provides:
+GET /tasks → List all tasks
+POST /tasks → Create a task
+PUT /tasks/:id → Update a task
+DELETE /tasks/:id → Delete a task
+POST /tasks/:id/subtasks → Create a subtask
+PUT /tasks/:id/subtasks/:subtaskId → Update a subtask
+DELETE /tasks/:id/subtasks/:subtaskId → Delete a subtask
+POST /generate-subtasks → Auto-generate subtasks using Gemini via n8n
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+All data is stored in tasks.json (users are also JSON-backed).
+---
+4. Setup n8n Workflow
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+Import the provided n8n.json workflow into your local n8n instance.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Set your Gemini API Key in the workflow configuration.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Run n8n locally:
+command : n8n
 
-## Learn More
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+By default, it runs at http://localhost:5678
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Open the n8n UI → locate the imported workflow → click Execute Workflow.
 
-### Code Splitting
+---
+5. Connecting It All
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+The n8n button popup sends a request to /generate-subtasks.
 
-### Analyzing the Bundle Size
+Node.js backend forwards the request to the n8n workflow.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+n8n uses Gemini API to generate subtasks in JSON format.
 
-### Making a Progressive Web App
+Generated subtasks are saved back into tasks.json.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+The UI automatically updates with the new task + subtasks.
+---
+🗂️ Data Model
 
-### Advanced Configuration
+I used JSON files to simulate a mongo db as my system had a glitch. Example schema:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+[
+  {
+    "id": 101,
+    "taskName": "Build Login Page",
+    "assignedUserIds": [1, 2],
+    "status": "In Progress",
+    "storyPoints": 5,
+    "history": [
+      { "status": "Not Started", "timestamp": "Aug 29, 2025, 10:00 AM" },
+      { "status": "In Progress", "timestamp": "Aug 29, 2025, 10:30 AM" }
+    ],
+    "subtasks": [
+      {
+        "id": 201,
+        "taskName": "Create UI",
+        "assignedUserIds": [2],
+        "status": "Not Started",
+        "storyPoints": 2,
+        "history": []
+      }
+    ]
+  }
+]
 
-### Deployment
+---
+This implementation uses local JSON files (tasks.json, users.json) with CRUD operations via Express.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+🎯 How It Works (Flow)
 
-### `npm run build` fails to minify
+User clicks n8n button → enters a task name.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+React calls POST /generate-subtasks → handled by Express.
+
+Express forwards the request to n8n.
+
+n8n → Calls Gemini API → returns a JSON array of subtasks.
+
+Subtasks are written into tasks.json alongside the main task.
+
+React UI updates and displays the newly created task + subtasks.
+---
+
+🔑 Environment Variables
+
+Make sure you have your Gemini API Key available:
+
+I have hardcoded it in server.js 
+---
+
+👨‍💻 Author
+
+Monish Alur
