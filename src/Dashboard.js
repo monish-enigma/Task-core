@@ -230,7 +230,19 @@ const Dashboard = () => {
           ))}
         </Paper>
       </Box>
-
+      <button style={{
+        position: "absolute",
+        top: "395px",
+        right: "90px",
+          marginBottom: "15px",
+          padding: "8px 10px",
+          border: "1px solid #4b6cb7",
+          background: "#4b6cb7",
+          color: "white",
+          borderRadius: "6px",
+          cursor: "pointer",
+          // boxShadow: "0 0 8px #4b6cb7",
+        }} onClick={fetchTasks}>Refresh</button>
       {/* Tasks Table */}
       <Table sx={{ borderCollapse: "separate", borderSpacing: "0 10px" }}>
         <TableHead>
