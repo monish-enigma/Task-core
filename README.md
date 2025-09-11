@@ -28,41 +28,28 @@ cd <repo-folder>
 npm install
 2. Start the React Frontend
 npm start
-
-
 Runs on http://localhost:3000
-.
+
 
 3. Start the Node.js Backend
 
 In another terminal:
-
 node server.js
-
-
 Runs on http://localhost:5000
-.
 
+---
 The backend provides:
-
 GET /tasks → List all tasks
-
 POST /tasks → Create a task
-
 PUT /tasks/:id → Update a task
-
 DELETE /tasks/:id → Delete a task
-
 POST /tasks/:id/subtasks → Create a subtask
-
 PUT /tasks/:id/subtasks/:subtaskId → Update a subtask
-
 DELETE /tasks/:id/subtasks/:subtaskId → Delete a subtask
-
 POST /generate-subtasks → Auto-generate subtasks using Gemini via n8n
 
 All data is stored in tasks.json (users are also JSON-backed).
-
+---
 4. Setup n8n Workflow
 
 Import the provided n8n.json workflow into your local n8n instance.
@@ -70,18 +57,17 @@ Import the provided n8n.json workflow into your local n8n instance.
 Set your Gemini API Key in the workflow configuration.
 
 Run n8n locally:
-
-n8n
+command : n8n
 
 
 By default, it runs at http://localhost:5678
-.
 
 Open the n8n UI → locate the imported workflow → click Execute Workflow.
 
+---
 5. Connecting It All
 
-The React Neon button popup sends a request to /generate-subtasks.
+The n8n button popup sends a request to /generate-subtasks.
 
 Node.js backend forwards the request to the n8n workflow.
 
@@ -90,7 +76,7 @@ n8n uses Gemini API to generate subtasks in JSON format.
 Generated subtasks are saved back into tasks.json.
 
 The UI automatically updates with the new task + subtasks.
-
+---
 🗂️ Data Model
 
 I used JSON files to simulate a mongo db as my system had a glitch. Example schema:
@@ -119,7 +105,7 @@ I used JSON files to simulate a mongo db as my system had a glitch. Example sche
   }
 ]
 
-
+---
 This implementation uses local JSON files (tasks.json, users.json) with CRUD operations via Express.
 
 🎯 How It Works (Flow)
@@ -135,36 +121,14 @@ n8n → Calls Gemini API → returns a JSON array of subtasks.
 Subtasks are written into tasks.json alongside the main task.
 
 React UI updates and displays the newly created task + subtasks.
+---
 
 🔑 Environment Variables
 
 Make sure you have your Gemini API Key available:
 
 I have hardcoded it in server.js 
-
-🚀 Run Everything Together
-
-Start backend:
-
-node server.js
-
-
-Start frontend:
-
-npm start
-
-
-Start n8n:
-
-command : n8n
-
-
-In browser:
-
-Go to React app → Click Neon button → Enter task.
-
-Watch subtasks generated automatically and added into tasks.json.
-
+---
 
 👨‍💻 Author
 
